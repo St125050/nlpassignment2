@@ -6,10 +6,20 @@ import nltk
 import re
 from nltk.corpus import stopwords
 import numpy as np
+import os
 
-# Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
+# Check if NLTK data is already present, if not download it
+nltk_data_dir = os.path.join(os.getcwd(), "nltk_data")
+if not os.path.exists(nltk_data_dir):
+    os.makedirs(nltk_data_dir)
+
+nltk.data.path.append(nltk_data_dir)
+
+try:
+    stopwords.words('english')
+except LookupError:
+    nltk.download('stopwords', download_dir=nltk_data_dir)
+    nltk.download('punkt', download_dir=nltk_data_dir)
 
 # Load the dataset (example for Project Gutenberg text)
 url = "https://www.gutenberg.org/files/1342/1342-0.txt"
