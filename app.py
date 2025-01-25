@@ -5,10 +5,8 @@ import re
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from nltk.corpus import stopwords
-from PIL import Image
 import os
+from nltk.corpus import stopwords
 
 # Ensure necessary NLTK data is available
 nltk.download('punkt')
@@ -122,20 +120,24 @@ if st.button("Load Data"):
         st.error(f"Error loading data: {e}")
 
 # Load pre-trained model from GitHub (or local path if available)
-@st.cache
 def load_pretrained_model():
-    model_url = 'https://github.com/St125050/nlpassignment2/blob/main/model.pth'  # Replace with the actual URL of the model file
-    model_path = 'model.pth'
+    # Check if the model is already in the session state
+    if 'model' not in st.session_state:
+        model_url = 'https://github.com/your-username/your-repo-path/raw/main/model.pth'  # Replace with the actual URL of the model file
+        model_path = 'model.pth'
 
-    # Download model if it doesn't exist
-    if not os.path.exists(model_path):
-        with open(model_path, 'wb') as f:
-            f.write(requests.get(model_url).content)
-    
-    model = LanguageModel(len(vocab), embedding_dim=50, hidden_dim=100)
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
-    return model
+        # Download model if it doesn't exist
+        if not os.path.exists(model_path):
+            with open(model_path, 'wb') as f:
+                f.write(requests.get(model_url).content)
+        
+        model = LanguageModel(len(vocab), embedding_dim=50, hidden_dim=100)
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
+
+        # Save the model in session state
+        st.session_state.model = model
+    return st.session_state.model
 
 # Hyperparameters (based on the pre-trained model)
 embedding_dim = 50
