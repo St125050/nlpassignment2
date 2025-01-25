@@ -133,6 +133,8 @@ index2word = None
 # Load and preprocess data
 if st.button("Load Data"):
     try:
+        nltk.download('punkt')
+        nltk.download('stopwords')
         input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
         st.write("Data loaded and preprocessed successfully.")
         st.write(f"Vocabulary size: {len(vocab)}")
