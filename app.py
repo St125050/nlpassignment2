@@ -82,7 +82,7 @@ def load_and_preprocess_data(url):
     return input_sequences, vocab, word2index, index2word
 
 # Function to train the model
-def train_model(model, input_sequences, criterion, optimizer, epochs):
+def train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size):
     model.train()
     for epoch in range(epochs):
         total_loss = 0
@@ -103,7 +103,7 @@ def train_model(model, input_sequences, criterion, optimizer, epochs):
         st.write(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
 
 # Function to generate text
-def generate_text(model, start_text, max_length=50):
+def generate_text(model, start_text, max_length, word2index, index2word):
     model.eval()
     words = start_text.split()
     state_h, state_c = model.init_state(batch_size=1)
@@ -124,33 +124,44 @@ st.title("Text Generation with LSTM")
 # URL input
 url = st.text_input("Enter the URL of the text dataset", "https://www.gutenberg.org/files/1342/1342-0.txt")
 
+# Initialize variables
+input_sequences = None
+vocab = None
+word2index = None
+index2word = None
+
 # Load and preprocess data
 if st.button("Load Data"):
     input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
     st.write("Data loaded and preprocessed successfully.")
+    st.write(f"Vocabulary size: {len(vocab)}")
+    st.write(f"Total sequences: {len(input_sequences)}")
 
 # Hyperparameters
 embedding_dim = 50
 hidden_dim = 100
-vocab_size = len(vocab)
 batch_size = 32
 epochs = 10
 
 # Model, loss function, optimizer
-model = LanguageModel(vocab_size, embedding_dim, hidden_dim)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=0.001)
+if input_sequences is not None:
+    vocab_size = len(vocab)
+    model = LanguageModel(vocab_size, embedding_dim, hidden_dim)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Train the model
-if st.button("Train Model"):
-    train_model(model, input_sequences, criterion, optimizer, epochs)
-    torch.save(model.state_dict(), 'model.pth')
-    st.write("Model trained and saved successfully.")
+    # Train the model
+    if st.button("Train Model"):
+        train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size)
+        torch.save(model.state_dict(), 'model.pth')
+        st.write("Model trained and saved successfully.")
 
-# Text generation
-start_text = st.text_input("Enter the start text for text generation", "harry potter is")
-if st.button("Generate Text"):
-    model.load_state_dict(torch.load('model.pth'))
-    generated_text = generate_text(model, start_text)
-    st.write("Generated Text:")
-    st.write(generated_text)
+    # Text generation
+    start_text = st.text_input("Enter the start text for text generation", "harry potter is")
+    if st.button("Generate Text"):
+        model.load_state_dict(torch.load('model.pth'))
+        generated_text = generate_text(model, start_text, max_length=50, word2index, index2word)
+        st.write("Generated Text:")
+        st.write(generated_text)
+else:
+    st.write("Please load and preprocess the data first.")
