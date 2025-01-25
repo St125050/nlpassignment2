@@ -1,6 +1,49 @@
 import streamlit as st
 import torch
 import torch.nn as nn
+import requests
+import nltk
+import re
+from nltk.corpus import stopwords
+import numpy as np
+
+# Download necessary NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# Load the dataset (example for Project Gutenberg text)
+url = "https://www.gutenberg.org/files/1342/1342-0.txt"
+response = requests.get(url)
+data = response.text
+
+# Save the data to a file
+with open("dataset.txt", "w", encoding="utf-8") as file:
+    file.write(data)
+
+# Load the dataset from file
+with open('dataset.txt', 'r', encoding='utf-8') as file:
+    text = file.read()
+
+# Tokenization
+tokens = nltk.word_tokenize(text)
+
+# Lowercasing
+tokens = [token.lower() for token in tokens]
+
+# Removing punctuation and special characters
+tokens = [re.sub(r'\W+', '', token) for token in tokens if re.sub(r'\W+', '', token)]
+
+# Removing stop words (optional)
+stop_words = set(stopwords.words('english'))
+tokens = [token for token in tokens if token not in stop_words]
+
+# Add a special token for unknown words
+tokens.append('<UNK>')
+
+# Numericalization
+vocab = list(set(tokens))
+word2index = {word: i for i, word in enumerate(vocab)}
+index2word = {i: word for i, word in enumerate(vocab)}
 
 # Define the model class (this should match your trained model's class)
 class LanguageModel(nn.Module):
