@@ -132,10 +132,13 @@ index2word = None
 
 # Load and preprocess data
 if st.button("Load Data"):
-    input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
-    st.write("Data loaded and preprocessed successfully.")
-    st.write(f"Vocabulary size: {len(vocab)}")
-    st.write(f"Total sequences: {len(input_sequences)}")
+    try:
+        input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
+        st.write("Data loaded and preprocessed successfully.")
+        st.write(f"Vocabulary size: {len(vocab)}")
+        st.write(f"Total sequences: {len(input_sequences)}")
+    except Exception as e:
+        st.error(f"Error loading data: {e}")
 
 # Hyperparameters
 embedding_dim = 50
