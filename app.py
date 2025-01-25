@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 from nltk.corpus import stopwords
 from PIL import Image
+import os
 
 # Ensure necessary NLTK data is available
 nltk.download('punkt')
@@ -82,27 +83,6 @@ def load_and_preprocess_data(url):
 
     return input_sequences, vocab, word2index, index2word
 
-# Function to train the model
-def train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size):
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for i in range(0, len(input_sequences) - batch_size, batch_size):
-            inputs = torch.tensor(input_sequences[i:i + batch_size, :-1], dtype=torch.long)
-            targets = torch.tensor(input_sequences[i:i + batch_size, 1:], dtype=torch.long)
-
-            optimizer.zero_grad()
-            state_h, state_c = model.init_state(batch_size)
-            outputs, _ = model(inputs, (state_h, state_c))
-            loss = criterion(outputs.view(-1, vocab_size), targets.view(-1))
-            loss.backward()
-            optimizer.step()
-
-            total_loss += loss.item()
-
-        avg_loss = total_loss / (len(input_sequences) // batch_size)
-        st.write(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
-
 # Function to generate text
 def generate_text(model, start_text, max_length, word2index, index2word):
     model.eval()
@@ -120,9 +100,9 @@ def generate_text(model, start_text, max_length, word2index, index2word):
     return ' '.join(words)
 
 # Streamlit app
-st.title("Text Generation with LSTM")
+st.title("Text Generation with Pre-trained LSTM")
 
-# URL input
+# URL input (optional for loading new data)
 url = st.text_input("Enter the URL of the text dataset", "https://www.gutenberg.org/files/1342/1342-0.txt")
 
 # Initialize variables
@@ -131,7 +111,7 @@ vocab = None
 word2index = None
 index2word = None
 
-# Load and preprocess data
+# Load and preprocess data (optional, if you want to load a new dataset)
 if st.button("Load Data"):
     try:
         input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
@@ -141,29 +121,33 @@ if st.button("Load Data"):
     except Exception as e:
         st.error(f"Error loading data: {e}")
 
-# Hyperparameters
+# Load pre-trained model from GitHub (or local path if available)
+@st.cache
+def load_pretrained_model():
+    model_url = 'https://github.com/your-username/your-repo-path/raw/main/model.pth'  # Replace with the actual URL of the model file
+    model_path = 'model.pth'
+
+    # Download model if it doesn't exist
+    if not os.path.exists(model_path):
+        with open(model_path, 'wb') as f:
+            f.write(requests.get(model_url).content)
+    
+    model = LanguageModel(len(vocab), embedding_dim=50, hidden_dim=100)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model
+
+# Hyperparameters (based on the pre-trained model)
 embedding_dim = 50
 hidden_dim = 100
-batch_size = 32
-epochs = 10
 
-# Model, loss function, optimizer
+# Generate text with pre-trained model
 if input_sequences is not None:
-    vocab_size = len(vocab)
-    model = LanguageModel(vocab_size, embedding_dim, hidden_dim)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-    # Train the model
-    if st.button("Train Model"):
-        train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size)
-        torch.save(model.state_dict(), 'model.pth')
-        st.write("Model trained and saved successfully.")
+    model = load_pretrained_model()  # Load the model
 
     # Text generation
     start_text = st.text_input("Enter the start text for text generation", "harry potter is")
     if st.button("Generate Text"):
-        model.load_state_dict(torch.load('model.pth'))
         generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
         st.write("Generated Text:")
         st.write(generated_text)
