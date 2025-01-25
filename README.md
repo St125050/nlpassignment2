@@ -1,26 +1,5 @@
 # Text Generation with Language Model
 
-This project demonstrates how to generate text using a trained language model based on user input. The model is trained on a dataset of text (e.g., Project Gutenberg) and uses a Long Short-Term Memory (LSTM) network to generate coherent text sequences.
-
-## Project Setup
-
-This project uses a pre-trained LSTM model in PyTorch to generate text based on an initial prompt provided by the user. The model is trained on a tokenized dataset and uses a character-level approach for generating text.
-
-### Prerequisites
-
-- Python 3.x
-- PyTorch
-- NLTK
-- Streamlit
-
-### Install Dependencies
-
-To run this project, you need to install the required libraries. You can install them by running:
-
-```bash
-pip install -r requirements.txt
-# Text Generation with Language Model
-
 This project demonstrates training a language model using a dataset and deploying the model through a Streamlit web application. The model is trained to generate text based on an input prompt.
 
 ## Project Description
