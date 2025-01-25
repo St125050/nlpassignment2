@@ -7,9 +7,13 @@ import streamlit as st
 from nltk.corpus import stopwords
 import requests
 
-# Download necessary NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
+# Download necessary NLTK data (handles missing resources)
+try:
+    nltk.data.find('tokenizers/punkt')
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('punkt')
+    nltk.download('stopwords')
 
 # Load the dataset (example for Project Gutenberg text)
 url = "https://www.gutenberg.org/files/1342/1342-0.txt"
@@ -113,4 +117,3 @@ if user_input:
         generated_text = generate_text(model, user_input)
         st.success("Generated Text:")
         st.write(generated_text)
-
