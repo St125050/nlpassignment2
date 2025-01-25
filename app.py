@@ -124,7 +124,7 @@ if st.button("Load Data"):
 # Load pre-trained model from GitHub (or local path if available)
 @st.cache
 def load_pretrained_model():
-    model_url = 'https://github.com/your-username/your-repo-path/raw/main/model.pth'  # Replace with the actual URL of the model file
+    model_url = 'https://github.com/St125050/nlpassignment2/blob/main/model.pth'  # Replace with the actual URL of the model file
     model_path = 'model.pth'
 
     # Download model if it doesn't exist
