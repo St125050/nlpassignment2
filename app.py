@@ -4,7 +4,6 @@ import re
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from nltk.corpus import stopwords
 
 # Download necessary NLTK data
