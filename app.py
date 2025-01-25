@@ -7,8 +7,13 @@ import streamlit as st
 from nltk.corpus import stopwords
 import requests
 
-# Load spaCy model for tokenization
-nlp = spacy.load("en_core_web_sm")
+# Check if the model is installed; if not, download it
+try:
+    spacy.load("en_core_web_sm")
+except OSError:
+    from spacy.cli import download
+    download("en_core_web_sm")
+    spacy.load("en_core_web_sm")
 
 # Load the dataset (example for Project Gutenberg text)
 url = "https://www.gutenberg.org/files/1342/1342-0.txt"
@@ -24,6 +29,7 @@ with open('dataset.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
 # Tokenization using spaCy
+nlp = spacy.load("en_core_web_sm")
 doc = nlp(text)
 tokens = [token.text.lower() for token in doc if not token.is_punct and not token.is_stop]
 
