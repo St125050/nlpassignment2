@@ -160,7 +160,7 @@ if input_sequences is not None:
     start_text = st.text_input("Enter the start text for text generation", "harry potter is")
     if st.button("Generate Text"):
         model.load_state_dict(torch.load('model.pth'))
-        generated_text = generate_text(model, start_text, max_length=50, word2index, index2word)
+        generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
         st.write("Generated Text:")
         st.write(generated_text)
 else:
