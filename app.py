@@ -17,6 +17,7 @@ nltk.data.path.append(nltk_data_dir)
 
 try:
     stopwords.words('english')
+    nltk.word_tokenize("test")
 except LookupError:
     nltk.download('stopwords', download_dir=nltk_data_dir)
     nltk.download('punkt', download_dir=nltk_data_dir)
