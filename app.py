@@ -1,60 +1,6 @@
-import streamlit as st
 import torch
-import torch.nn as nn
-import requests
-import nltk
-import re
-from nltk.corpus import stopwords
 import numpy as np
-import os
-
-# Check if NLTK data is already present, if not download it
-nltk_data_dir = os.path.join(os.getcwd(), "nltk_data")
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir)
-
-nltk.data.path.append(nltk_data_dir)
-
-try:
-    stopwords.words('english')
-    nltk.word_tokenize("test")
-except LookupError:
-    nltk.download('stopwords', download_dir=nltk_data_dir)
-    nltk.download('punkt', download_dir=nltk_data_dir)
-
-# Load the dataset (example for Project Gutenberg text)
-url = "https://www.gutenberg.org/files/1342/1342-0.txt"
-response = requests.get(url)
-data = response.text
-
-# Save the data to a file
-with open("dataset.txt", "w", encoding="utf-8") as file:
-    file.write(data)
-
-# Load the dataset from file
-with open('dataset.txt', 'r', encoding='utf-8') as file:
-    text = file.read()
-
-# Tokenization
-tokens = nltk.word_tokenize(text)
-
-# Lowercasing
-tokens = [token.lower() for token in tokens]
-
-# Removing punctuation and special characters
-tokens = [re.sub(r'\W+', '', token) for token in tokens if re.sub(r'\W+', '', token)]
-
-# Removing stop words (optional)
-stop_words = set(stopwords.words('english'))
-tokens = [token for token in tokens if token not in stop_words]
-
-# Add a special token for unknown words
-tokens.append('<UNK>')
-
-# Numericalization
-vocab = list(set(tokens))
-word2index = {word: i for i, word in enumerate(vocab)}
-index2word = {i: word for i, word in enumerate(vocab)}
+import streamlit as st
 
 # Define the model class (this should match your trained model's class)
 class LanguageModel(nn.Module):
@@ -74,14 +20,14 @@ class LanguageModel(nn.Module):
         return (torch.zeros(2, batch_size, self.lstm.hidden_size),
                 torch.zeros(2, batch_size, self.lstm.hidden_size))
 
-# Load the trained model
-model = LanguageModel(vocab_size=len(vocab), embedding_dim=50, hidden_dim=100)
+# Load the trained model (make sure the model and vocab are in the same directory)
+vocab_size = len(vocab)  # Your vocabulary size from training
+model = LanguageModel(vocab_size, embedding_dim=50, hidden_dim=100)
 model.load_state_dict(torch.load('model.pth'))
 model.eval()
 
 # Define the text generation function
 def generate_text(model, start_text, max_length=50):
-    model.eval()
     words = start_text.split()
     state_h, state_c = model.init_state(batch_size=1)
     
