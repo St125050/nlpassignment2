@@ -338,6 +338,4 @@ To deploy your Streamlit app, you can use platforms such as Streamlit Cloud, Her
 - [PyTorch](https://pytorch.org/) for the machine learning library.
 - [NLTK](https://www.nltk.org/) for the natural language processing toolkit.
 
-## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
