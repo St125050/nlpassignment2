@@ -1,19 +1,14 @@
+import spacy
 import torch
 import torch.nn as nn
 import numpy as np
 import re
-import nltk
 import streamlit as st
 from nltk.corpus import stopwords
 import requests
 
-# Download necessary NLTK data (handles missing resources)
-try:
-    nltk.data.find('tokenizers/punkt')
-    nltk.data.find('corpora/stopwords')
-except LookupError:
-    nltk.download('punkt')
-    nltk.download('stopwords')
+# Load spaCy model for tokenization
+nlp = spacy.load("en_core_web_sm")
 
 # Load the dataset (example for Project Gutenberg text)
 url = "https://www.gutenberg.org/files/1342/1342-0.txt"
@@ -28,18 +23,9 @@ with open("dataset.txt", "w", encoding="utf-8") as file:
 with open('dataset.txt', 'r', encoding='utf-8') as file:
     text = file.read()
 
-# Tokenization
-tokens = nltk.word_tokenize(text)
-
-# Lowercasing
-tokens = [token.lower() for token in tokens]
-
-# Removing punctuation and special characters
-tokens = [re.sub(r'\W+', '', token) for token in tokens if re.sub(r'\W+', '', token)]
-
-# Removing stop words (optional)
-stop_words = set(stopwords.words('english'))
-tokens = [token for token in tokens if token not in stop_words]
+# Tokenization using spaCy
+doc = nlp(text)
+tokens = [token.text.lower() for token in doc if not token.is_punct and not token.is_stop]
 
 # Add a special token for unknown words
 tokens.append('<UNK>')
