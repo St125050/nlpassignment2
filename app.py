@@ -32,16 +32,8 @@ class LanguageModel(nn.Module):
                 torch.zeros(2, batch_size, self.lstm.hidden_size))
 
 # Function to load and preprocess data
-def load_and_preprocess_data(url):
-    response = requests.get(url)
-    data = response.text
-
-    # Save the data to a file
-    with open("dataset.txt", "w", encoding="utf-8") as file:
-        file.write(data)
-
-    # Load the dataset from file
-    with open('dataset.txt', 'r', encoding='utf-8') as file:
+def load_and_preprocess_data(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
 
     # Tokenization
@@ -100,58 +92,47 @@ def generate_text(model, start_text, max_length, word2index, index2word):
 # Streamlit app
 st.title("Text Generation with Pre-trained LSTM")
 
-# URL input (optional for loading new data)
-url = st.text_input("Enter the URL of the text dataset", "https://www.gutenberg.org/files/1342/1342-0.txt")
+# GitHub Repo URL for model and dataset
+github_model_url = 'https://github.com/your-username/your-repo/raw/main/model.pth'  # Replace with your actual repo path
+github_dataset_url = 'https://github.com/your-username/your-repo/raw/main/dataset.txt'  # Replace with your actual repo path
 
-# Initialize variables
-input_sequences = None
-vocab = None
-word2index = None
-index2word = None
+# Local paths
+model_path = 'model.pth'
+dataset_path = 'dataset.txt'
 
-# Load and preprocess data (optional, if you want to load a new dataset)
-if st.button("Load Data"):
-    try:
-        input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
-        st.write("Data loaded and preprocessed successfully.")
-        st.write(f"Vocabulary size: {len(vocab)}")
-        st.write(f"Total sequences: {len(input_sequences)}")
-    except Exception as e:
-        st.error(f"Error loading data: {e}")
+# Download model and dataset from GitHub if they are not available locally
+if not os.path.exists(model_path):
+    with open(model_path, 'wb') as f:
+        f.write(requests.get(github_model_url).content)
+    st.write("Model downloaded successfully.")
 
-# Load pre-trained model from GitHub (or local path if available)
+if not os.path.exists(dataset_path):
+    with open(dataset_path, 'wb') as f:
+        f.write(requests.get(github_dataset_url).content)
+    st.write("Dataset downloaded successfully.")
+
+# Load dataset and preprocess it
+input_sequences, vocab, word2index, index2word = load_and_preprocess_data(dataset_path)
+st.write(f"Vocabulary size: {len(vocab)}")
+st.write(f"Total sequences: {len(input_sequences)}")
+
+# Load pre-trained model
 def load_pretrained_model():
-    # Check if the model is already in the session state
-    if 'model' not in st.session_state:
-        model_url = 'https://github.com/St125050/nlpassignment2/blob/main/model.pth'  # Replace with the actual URL of the model file
-        model_path = 'model.pth'
-
-        # Download model if it doesn't exist
-        if not os.path.exists(model_path):
-            with open(model_path, 'wb') as f:
-                f.write(requests.get(model_url).content)
-        
-        model = LanguageModel(len(vocab), embedding_dim=50, hidden_dim=100)
-        model.load_state_dict(torch.load(model_path))
-        model.eval()
-
-        # Save the model in session state
-        st.session_state.model = model
-    return st.session_state.model
+    model = LanguageModel(len(vocab), embedding_dim=50, hidden_dim=100)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    return model
 
 # Hyperparameters (based on the pre-trained model)
 embedding_dim = 50
 hidden_dim = 100
 
 # Generate text with pre-trained model
-if input_sequences is not None:
-    model = load_pretrained_model()  # Load the model
+model = load_pretrained_model()  # Load the model
 
-    # Text generation
-    start_text = st.text_input("Enter the start text for text generation", "harry potter is")
-    if st.button("Generate Text"):
-        generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
-        st.write("Generated Text:")
-        st.write(generated_text)
-else:
-    st.write("Please load and preprocess the data first.")
+# Text generation
+start_text = st.text_input("Enter the start text for text generation", "harry potter is")
+if st.button("Generate Text"):
+    generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
+    st.write("Generated Text:")
+    st.write(generated_text)
