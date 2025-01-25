@@ -1,5 +1,4 @@
 import streamlit as st
-import requests
 import nltk
 import re
 import numpy as np
@@ -7,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from nltk.corpus import stopwords
-from PIL import Image
 
 # Download necessary NLTK data
 nltk.download('punkt')
@@ -32,16 +30,9 @@ class LanguageModel(nn.Module):
                 torch.zeros(2, batch_size, self.lstm.hidden_size))
 
 # Function to load and preprocess data
-def load_and_preprocess_data(url):
-    response = requests.get(url)
-    data = response.text
-
-    # Save the data to a file
-    with open("dataset.txt", "w", encoding="utf-8") as file:
-        file.write(data)
-
+def load_and_preprocess_data(file_path):
     # Load the dataset from file
-    with open('dataset.txt', 'r', encoding='utf-8') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         text = file.read()
 
     # Tokenization
@@ -81,27 +72,6 @@ def load_and_preprocess_data(url):
 
     return input_sequences, vocab, word2index, index2word
 
-# Function to train the model
-def train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size):
-    model.train()
-    for epoch in range(epochs):
-        total_loss = 0
-        for i in range(0, len(input_sequences) - batch_size, batch_size):
-            inputs = torch.tensor(input_sequences[i:i + batch_size, :-1], dtype=torch.long)
-            targets = torch.tensor(input_sequences[i:i + batch_size, 1:], dtype=torch.long)
-
-            optimizer.zero_grad()
-            state_h, state_c = model.init_state(batch_size)
-            outputs, _ = model(inputs, (state_h, state_c))
-            loss = criterion(outputs.view(-1, vocab_size), targets.view(-1))
-            loss.backward()
-            optimizer.step()
-
-            total_loss += loss.item()
-
-        avg_loss = total_loss / (len(input_sequences) // batch_size)
-        st.write(f"Epoch {epoch+1}/{epochs}, Loss: {avg_loss:.4f}")
-
 # Function to generate text
 def generate_text(model, start_text, max_length, word2index, index2word):
     model.eval()
@@ -121,52 +91,26 @@ def generate_text(model, start_text, max_length, word2index, index2word):
 # Streamlit app
 st.title("Text Generation with LSTM")
 
-# URL input
-url = st.text_input("Enter the URL of the text dataset", "https://www.gutenberg.org/files/1342/1342-0.txt")
-
-# Initialize variables
-input_sequences = None
-vocab = None
-word2index = None
-index2word = None
-
 # Load and preprocess data
-if st.button("Load Data"):
-    try:
-        nltk.download('punkt')
-        nltk.download('stopwords')
-        input_sequences, vocab, word2index, index2word = load_and_preprocess_data(url)
-        st.write("Data loaded and preprocessed successfully.")
-        st.write(f"Vocabulary size: {len(vocab)}")
-        st.write(f"Total sequences: {len(input_sequences)}")
-    except Exception as e:
-        st.error(f"Error loading data: {e}")
+input_sequences, vocab, word2index, index2word = load_and_preprocess_data('dataset.txt')
+st.write("Data loaded and preprocessed successfully.")
+st.write(f"Vocabulary size: {len(vocab)}")
+st.write(f"Total sequences: {len(input_sequences)}")
 
 # Hyperparameters
 embedding_dim = 50
 hidden_dim = 100
 batch_size = 32
-epochs = 10
 
 # Model, loss function, optimizer
-if input_sequences is not None:
-    vocab_size = len(vocab)
-    model = LanguageModel(vocab_size, embedding_dim, hidden_dim)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+vocab_size = len(vocab)
+model = LanguageModel(vocab_size, embedding_dim, hidden_dim)
+model.load_state_dict(torch.load('model.pth'))
+st.write("Model loaded successfully.")
 
-    # Train the model
-    if st.button("Train Model"):
-        train_model(model, input_sequences, criterion, optimizer, epochs, batch_size, vocab_size)
-        torch.save(model.state_dict(), 'model.pth')
-        st.write("Model trained and saved successfully.")
-
-    # Text generation
-    start_text = st.text_input("Enter the start text for text generation", "harry potter is")
-    if st.button("Generate Text"):
-        model.load_state_dict(torch.load('model.pth'))
-        generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
-        st.write("Generated Text:")
-        st.write(generated_text)
-else:
-    st.write("Please load and preprocess the data first.")
+# Text generation
+start_text = st.text_input("Enter the start text for text generation", "harry potter is")
+if st.button("Generate Text"):
+    generated_text = generate_text(model, start_text, max_length=50, word2index=word2index, index2word=index2word)
+    st.write("Generated Text:")
+    st.write(generated_text)
