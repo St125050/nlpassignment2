@@ -1,4 +1,6 @@
 import streamlit as st
+import torch
+import torch.nn as nn
 
 # Define the model class (this should match your trained model's class)
 class LanguageModel(nn.Module):
